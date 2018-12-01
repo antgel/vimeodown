@@ -21,6 +21,13 @@ to appropriate values.
     to. For an external hard disk, this will be something like
     `/media/someuser/mydisk` on Linux or `/Volumes/mydisk` for Mac.
 
+## Miscellaneous
+
+* The script won't attempt to redownload videos found at the
+destination.
+* The network error handling is agricultural and will retry forever in
+the absence of a positive outcome.
+
 ## Disclaimer
 
 This code was written for a specific purpose, and no warranty is given

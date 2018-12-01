@@ -5,8 +5,10 @@ import logging
 import os
 import re
 import sys
+import time
 
 import requests
+from urllib3.exceptions import MaxRetryError
 import vimeo
 
 
@@ -51,7 +53,20 @@ def get_filename_from_cd(cd):
     return fname[0]
 
 
-next = f"/users/{args.username}/videos"
+def get_with_retry(url):
+    # Why don't we do this properly e.g. as per
+    # https://www.peterbe.com/plog/best-practice-with-retries-with-requests
+    # Because vimeo.py already wraps `requests` and things get complex.
+    try:
+        return v.get(url, allow_redirects=True)
+    except (requests.Timeout, MaxRetryError):
+        seconds_to_wait = 1
+        time.sleep(seconds_to_wait)
+        logger.info('Connection issue, retrying')
+        return get_with_retry(url)
+
+
+next_url = f"/users/{args.username}/videos"
 save_dir = f"{args.mountpoint}/vimeodown"
 
 try:
@@ -59,8 +74,9 @@ try:
 except FileExistsError:
     pass
 
-while next:
-    r = v.get(next)
+while next_url:
+    logger.debug(f"Getting video list from {next_url}")
+    r = get_with_retry(next_url)
     assert r.status_code == 200
     r_j = r.json()
     for video in r_j['data']:
@@ -74,17 +90,17 @@ while next:
         filename = filename.replace(':', '')
         filename = filename.replace('/', '')
         filename = filename.replace('|', '')
-        logger.info(f"Attempting: {filename}")
         save_path = f"{save_dir}/{filename}"
-        logger.debug(f"Save path: {save_path}")
 
+        logger.debug(f"Checking {filename}")
         # If the file already exists, move on.
         if os.path.isfile(save_path):
-            logger.info(f"{save_path} exists at destination, skipping")
+            logger.debug(f"Skipping {filename}, exists at destination")
             continue
 
-        r = requests.get(download_url, allow_redirects=True)
+        logger.info(f"Downloading {filename}")
+        r = get_with_retry(download_url)
+        logger.info(f"Saving to {save_path}")
         open(save_path, 'wb').write(r.content)
 
-    next = r_j['paging']['next']
-    logger.debug(f"Next page: {next}")
+    next_url = r_j['paging']['next']
