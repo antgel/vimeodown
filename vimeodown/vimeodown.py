@@ -86,16 +86,18 @@ while next_url:
         # Chop the start and end quotes from the filename
         filename = filename[1:-1]
         # Remove special characters as they don't work in filenames
-        # FIXME: Maybe escaping them would been better, but who cares?
+        # FIXME: Maybe escaping them would have been worked, but who
+        # cares?
         filename = filename.replace(':', '')
         filename = filename.replace('/', '')
         filename = filename.replace('|', '')
+        logger.info(f"Attempting: {filename}")
         save_path = f"{save_dir}/{filename}"
+        logger.debug(f"Save path: {save_path}")
 
-        logger.debug(f"Checking {filename}")
         # If the file already exists, move on.
         if os.path.isfile(save_path):
-            logger.debug(f"Skipping {filename}, exists at destination")
+            logger.info(f"{save_path} exists at destination, skipping")
             continue
 
         logger.info(f"Downloading {filename}")
