@@ -3,7 +3,7 @@ chardet==3.0.4
 idna==2.7
 pycurl==7.43.0
 PyVimeo==1.0.9
-requests==2.20.1
+requests==2.31.0
 six==1.10.0
 tinydb==3.12.1
 tuspy==0.2.1
